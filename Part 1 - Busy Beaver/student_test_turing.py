@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Student self-check test script for Turing Machine Simulator implementation.
-Save this file as student_test_turing.py in your project directory and run it:
-    python student_test_turing.py
-"""
+
 
 import sys
 import logging
@@ -19,7 +14,6 @@ except ImportError:
 
 def test_basic_acceptance():
     print("\n--- Test 1: Basic Acceptance of a Single Symbol ---")
-    # A simple machine that accepts a single '#' and rejects anything else
     transitions = {
         ('q0', '#'): ('saw_#', '#', 'R'),
         ('saw_#', ''): ('qa', '', 'R'),
@@ -28,11 +22,9 @@ def test_basic_acceptance():
     try:
         machine = TuringMachine(transitions)
         
-        # Test accepts
         assert machine.accepts('#') is True, "Should accept '#'"
         print("✅ Correctly accepted '#'")
         
-        # Test rejects
         assert machine.rejects('##') is True, "Should reject '##'"
         print("✅ Correctly rejected '##'")
         
@@ -57,7 +49,6 @@ def test_generator_structure():
         machine = TuringMachine(transitions)
         steps = list(machine.run('1'))
         
-        # Verify generator yielded configurations
         assert len(steps) >= 2, "Generator should yield at least two steps (initial and final)"
         
         first_step = steps[0]
@@ -81,7 +72,6 @@ def test_generator_structure():
 
 def test_tape_boundary_single_sided():
     print("\n--- Test 3: Tape Boundary Behavior ---")
-    # A machine that moves left from the initial cell q0 -> L -> q1 -> R -> qa
     transitions = {
         ('q0', '1'): ('q1', '1', 'L'),
         ('q1', '1'): ('qa', '1', 'R'),
@@ -90,8 +80,6 @@ def test_tape_boundary_single_sided():
     try:
         machine = TuringMachine(transitions)
         
-        # Note: If your double-sided tape is not implemented yet,
-        # it should log a warning but still run without throwing syntax/runtime errors.
         print("Testing execution that triggers a leftward move from the first cell:")
         machine.accepts('1')
         print("✅ Test 3 ran without crashing.")
