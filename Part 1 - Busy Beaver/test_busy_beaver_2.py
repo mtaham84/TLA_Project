@@ -9,4 +9,4 @@ transitions = {
 
 if __name__ == "__main__":
     tm = TuringMachine(transitions, start_state='a', accept_state='h', reject_state='r', blank_symbol='0')
-    tm.debug('', step_limit=20)  # ورودی خالی
+    tm.debug('', step_limit=20)  

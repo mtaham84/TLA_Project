@@ -9,20 +9,67 @@ from scipy import signal, ndimage
 
 
 def parse_pattern(filepath):
-    """
-    TODO: [Part 1d - RLE/Plaintext Parser]
-    Write a parser for Run Length Encoded (RLE) or Plaintext (.cells) patterns
-    so grids larger than 20x20 can be loaded.
-    
-    Args:
-        filepath (str): Path to the pattern file.
-        
-    Returns:
-        tuple: (width, height, list of (r, c) offsets of live cells)
-    """
-    # Student TODO: Implement parser here
-    pass
+    live_cells = []
 
+    if filepath.endswith(".cells"):
+        with open(filepath, "r") as f:
+            lines = [line.rstrip() for line in f if not line.startswith("!")]
+
+        height = len(lines)
+        width = max(len(line) for line in lines)
+
+        for r, line in enumerate(lines):
+            for c, ch in enumerate(line):
+                if ch == "O":
+                    live_cells.append((r, c))
+
+        return width, height, live_cells
+
+    elif filepath.endswith(".rle"):
+        with open(filepath, "r") as f:
+            lines = [line.strip() for line in f if not line.startswith("#") and line.strip()]
+
+        header = lines[0]
+        body = "".join(lines[1:])
+
+        parts = header.split(",")
+
+        width = int(parts[0].split("=")[1])
+        height = int(parts[1].split("=")[1])
+
+        r = 0
+        c = 0
+        number = ""
+
+        for ch in body:
+            if ch.isdigit():
+                number += ch
+
+            elif ch == "b":
+                count = int(number) if number else 1
+                c += count
+                number = ""
+
+            elif ch == "o":
+                count = int(number) if number else 1
+                for _ in range(count):
+                    live_cells.append((r, c))
+                    c += 1
+                number = ""
+
+            elif ch == "$":
+                count = int(number) if number else 1
+                r += count
+                c = 0
+                number = ""
+
+            elif ch == "!":
+                break
+
+        return width, height, live_cells
+
+    else:
+        raise ValueError("Unsupported file format")
 
 class GameOfLife:
     """
@@ -53,19 +100,25 @@ class GameOfLife:
         return self.getStates()
 
     def update_grid_fast(self, grid):
-        """
-        TODO: [Part 1e - Fast Convolution]
-        Use scipy.signal.convolve2d (or similar) to compute neighbor weights
-        rapidly for large grids (N > 1024).
-        
-        Args:
-            grid (np.ndarray): The current 2D grid of states.
-            
-        Returns:
-            np.ndarray: The next 2D grid of states.
-        """
-        # Student TODO: Implement fast 2D convolution method
-        pass
+        boundary = "fill" if self.finite else "wrap"
+
+        neighbors = signal.convolve2d(
+        grid,
+        self.neighborhood,
+        mode="same",
+        boundary=boundary,
+        fillvalue=0
+    )
+
+        survive = (grid == 1) & ((neighbors == 2) | (neighbors == 3))
+        born = (grid == 0) & (neighbors == 3)
+
+        new_grid = np.zeros_like(grid)
+
+        new_grid[survive | born] = self.aliveValue
+
+        return new_grid
+
 
     def evolve(self):
         """
@@ -78,13 +131,44 @@ class GameOfLife:
         if self.fastMode:
             self.grid = self.update_grid_fast(self.grid)
         else:
-            # TODO: [Part 1a - Core Rules]
-            # Remove the transition logic and implement the 4 standard GoL rules
-            # (Underpopulation, Survival, Overpopulation, Reproduction) by iterating 
-            # through the cells cell-by-cell. Handle self.finite wrapping appropriately.
-            
-            # Student TODO: Implement slow update cell-by-cell logic here
-            pass
+            new_grid = np.zeros_like(self.grid)
+
+        for i in range(self.rows):
+            for j in range(self.cols):
+
+                neighbors = 0
+
+                for di in (-1, 0, 1):
+                    for dj in (-1, 0, 1):
+
+                        if di == 0 and dj == 0:
+                            continue
+
+                        ni = i + di
+                        nj = j + dj
+
+                        if self.finite:
+
+                            if 0 <= ni < self.rows and 0 <= nj < self.cols:
+                                neighbors += self.grid[ni, nj]
+
+                        else:
+                            neighbors += self.grid[
+                                ni % self.rows,
+                                nj % self.cols
+                            ]
+
+                if self.grid[i, j] == self.aliveValue:
+
+                    if neighbors == 2 or neighbors == 3:
+                        new_grid[i, j] = self.aliveValue
+
+                else:
+
+                    if neighbors == 3:
+                        new_grid[i, j] = self.aliveValue
+
+        self.grid = new_grid
 
     def insertBlinker(self, index=(0, 0)):
         '''

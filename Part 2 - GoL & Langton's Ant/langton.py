@@ -6,20 +6,7 @@ import numpy as np
 
 
 class LangtonsAnt:
-    """
-    TODO: [Part 2 - Langton's Ant]
-    Create the LangtonsAnt class.
     
-    Instruct students to:
-    1. Implement the core rules:
-       - If on a white square, toggle the color of the square and turn 90 degrees clockwise ('R'), then move forward one unit.
-       - If on a black square, toggle the color of the square and turn 90 degrees counter-clockwise ('L'), then move forward one unit.
-    2. Extend it to handle multi-color states (representing rulesets like RLR, LLRR, LRRRRRLLR, etc.).
-       - A ruleset dictionary maps: {current_color: (next_color, turn_direction)}
-       - Where turn_direction is 'R' or 'L'.
-    3. Ensure wrapping at the boundaries (toroidal grid).
-    """
-
     def __init__(self, N, ant_position, rules):
         """
         Initialize the Langton's Ant simulation.
@@ -30,8 +17,14 @@ class LangtonsAnt:
             rules (dict): Dictionary defining transition rules.
                           Format: {current_color: (next_color, turn_direction)}
         """
-        # Student TODO: Implement initialization
-        pass
+        self.N = N
+        self.grid = np.zeros((N, N), dtype=np.uint8)
+
+        self.ant_row, self.ant_col = ant_position
+        UP=0
+        self.direction = UP
+
+        self.rules = rules
 
     def get_states(self):
         """
@@ -40,8 +33,7 @@ class LangtonsAnt:
         Returns:
             np.ndarray: The NxN cellular grid.
         """
-        # Student TODO: Return grid state
-        pass
+        return self.grid
 
     def get_current_position(self):
         """
@@ -50,15 +42,40 @@ class LangtonsAnt:
         Returns:
             tuple: Current coordinates of the ant.
         """
-        # Student TODO: Return current position
-        pass
+        return (self.ant_row, self.ant_col)
+    
 
     def step(self):
         """
         Perform a single simulation step following the ruleset.
         """
-        # Student TODO: Implement the ant's movement and cell state updates
-        pass
+        current_color = self.grid[self.ant_row, self.ant_col]
+
+        next_color, turn = self.rules[current_color]
+
+    
+        self.grid[self.ant_row, self.ant_col] = next_color
+        UP = 0
+        RIGHT = 1
+        DOWN = 2
+        LEFT = 3
+
+        if turn == 'R':
+            self.direction = (self.direction + 1) % 4
+        elif turn == 'L':
+            self.direction = (self.direction - 1) % 4
+        if self.direction == UP:
+            self.ant_row = (self.ant_row - 1) % self.N
+
+        elif self.direction == RIGHT:
+            self.ant_col = (self.ant_col + 1) % self.N
+
+        elif self.direction == DOWN:
+            self.ant_row = (self.ant_row + 1) % self.N
+
+        elif self.direction == LEFT:
+            self.ant_col = (self.ant_col - 1) % self.N
+
 
     def update(self):
         """
